@@ -3,43 +3,32 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Spotify Audio Finder — Duration Gate + Random Start</title>
+<title>Audio Finder — Spotify</title>
 <style>
-  :root{--bg:#0b0f14;--panel:#111722;--panel2:#0e1625;--border:#1e2a3b;--text:#e8f1f8;--muted:#9db1c6;--accent:#77e3ff;--ok:#78f0b4;--err:#ff7a7a;--chip:#1a2333}
+  :root{--bg:#0b0f14;--panel:#111722;--panel2:#0e1625;--border:#1e2a3b;--text:#e8f1f8;--muted:#9db1c6;--accent:#1db954;--ok:#78f0b4;--danger:#ff7a7a;--chip:#1a2333}
   *{box-sizing:border-box} html,body{height:100%}
   body{margin:0;background:linear-gradient(180deg,#0a0f16,#0a1119 40%,#0b0f14);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   header{padding:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   header h1{font-size:18px;margin:0}
   .badge{padding:4px 8px;border:1px solid #253247;border-radius:999px;background:var(--chip);color:#d9f2ff;font-size:12px}
-  main{display:grid;grid-template-columns:400px 1fr;gap:14px;padding:14px}
+  main{display:grid;grid-template-columns:380px 1fr;gap:14px;padding:14px}
   @media (max-width:1100px){main{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
   .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:#a9bfd1;margin:0;padding:12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#101722,#0e1520)}
   .section{padding:12px;border-bottom:1px solid #1b2433}
   .section:last-child{border-bottom:none}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  input[type="text"],input[type="url"],input[type="number"],textarea,select{
+  input[type="text"],input[type="url"],input[type="number"],select{
     flex:1;min-width:140px;background:#0c1320;border:1px solid #22324a;color:var(--text);padding:10px 12px;border-radius:10px;outline:none
   }
-  input:focus,select:focus,textarea:focus{border-color:#2e86a5;box-shadow:0 0 0 3px rgba(119,227,255,.15)}
+  input:focus,select:focus{border-color:#2e86a5;box-shadow:0 0 0 3px rgba(29,185,84,.2)}
   .btn{background:#122033;border:1px solid #2a3b56;color:#d6f0ff;padding:10px 12px;border-radius:10px;cursor:pointer}
   .btn:hover{filter:brightness(1.06)}
-  .btn.primary{background:linear-gradient(180deg,#1b90b5,#13779a);border-color:#106785}
+  .btn.primary{background:linear-gradient(180deg,#2ac86d,#1db954);border-color:#179846}
   .btn.ghost{background:transparent}
   .btn.danger{background:#301616;border-color:#663c3c;color:#ffd4d4}
   .mini{font-size:12px;color:var(--muted)}
-  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-  .chip{background:var(--chip);border:1px solid #26344a;padding:6px 10px;border-radius:999px;color:#cfe9ff;font-size:12px;cursor:pointer}
-  .player{display:flex;flex-direction:column;height:100%}
-  .now{padding:14px;border-bottom:1px solid #1b2433;background:linear-gradient(180deg,#101722,#0e1520)}
-  .title{font-weight:700}
-  .controls{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
-  .controls button{min-width:36px}
-  .progress{display:flex;align-items:center;gap:8px;margin-top:10px}
-  .progress input[type="range"]{flex:1}
-  .vol{display:flex;align-items:center;gap:8px;margin-left:auto}
   .tools{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #172033;background:var(--panel2);flex-wrap:wrap}
-  .filters{display:flex;align-items:center;gap:8px}
   .list{overflow:auto;flex:1}
   .track{display:grid;grid-template-columns:24px auto 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid #172033}
   .track:hover{background:#0c1421}
@@ -47,66 +36,186 @@
   .drag{cursor:grab; user-select:none; color:#8aa0b3; text-align:center}
   .srcTag{font-size:11px;color:#9bb0c3;background:#0e1a2c;border:1px solid #22324a;padding:2px 6px;border-radius:999px}
   .right{display:flex;align-items:center;gap:8px}
-  .ok{color:var(--ok)} .err{color:var(--err)}
+  .msg-ok{color:var(--ok)} .msg-err{color:var(--danger)}
   a.link{color:#9ad9ff;text-decoration:none}
   a.link:hover{text-decoration:underline}
-  /* Update drawer */
-  .drawer{position:fixed;right:-420px;top:0;width:400px;height:100vh;background:#0f1726;border-left:1px solid #203049;box-shadow:-10px 0 30px rgba(0,0,0,.3);transition:right .25s;padding:16px;z-index:50}
+
+  /* Notes drawer */
+  .drawer{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:#0f1726;border-left:1px solid #203049;box-shadow:-10px 0 30px rgba(0,0,0,.3);transition:right .25s;padding:16px;z-index:50}
   .drawer.open{right:0}
-  .drawer .log{margin-top:10px;max-height:55vh;overflow:auto;border:1px solid #22324a;border-radius:10px;padding:8px;background:#0c1422}
-  .drawer .item{border-bottom:1px dashed #25324a;padding:6px 0}
-  .drawer .item:last-child{border-bottom:none}
+  .drawer h3{margin:0 0 8px}
+  .drawer textarea{width:100%;height:45vh;background:#0a1220;color:#e9f3ff;border:1px solid #22324a;border-radius:10px;padding:10px}
+  .drawer .log{margin-top:10px;max-height:38vh;overflow:auto;border:1px solid #22324a;border-radius:10px;padding:8px;background:#0c1422}
+  .drawer .log .item{border-bottom:1px dashed #25324a;padding:6px 0}
+  .drawer .log .item:last-child{border-bottom:none}
 </style>
 </head>
 <body>
 <header>
-  <h1>🎧 Spotify Audio Finder</h1>
-  <span class="badge">Duration gate (clips 0→15m)</span>
-  <span class="badge">Random start (24s→15m)</span>
+  <h1>🎧 Audio Finder — Spotify</h1>
+  <span class="badge">PKCE login (local)</span>
   <span class="badge">Shuffle + Drag reorder</span>
+  <span class="badge">Random start (24s→15m)</span>
   <button class="btn" id="openNotes" style="margin-left:auto">✍️ Update Notes</button>
 </header>
 
 <main>
-  <!-- LEFT: Auth + Add -->
+  <!-- LEFT: Spotify connect + Add by URI -->
   <div class="panel">
-    <h2>Spotify Setup</h2>
+    <h2>Spotify</h2>
 
     <div class="section">
       <div class="row">
-        <input id="clientId" type="text" placeholder="Spotify Client ID (from Dashboard)" />
-        <input id="redirectUri" type="url" placeholder="Redirect URI (must match in Dashboard)" />
-        <button class="btn primary" id="connectBtn">Connect</button>
+        <input id="clientId" type="text" placeholder="Your Spotify Client ID (from dashboard)" />
+        <input id="redirectUri" type="url" value="http://127.0.0.1:5500/" />
       </div>
       <div class="row">
-        <input id="accessToken" type="text" placeholder="Or paste a temporary Access Token" />
-        <button class="btn" id="useTokenBtn" title="Use pasted token">Use token</button>
-        <button class="btn" id="transferBtn" title="Send playback to this page">Make this device active</button>
+        <button class="btn primary" id="connectBtn">Connect to Spotify</button>
+        <button class="btn ghost" id="logoutBtn">Logout</button>
+        <span id="authStatus" class="mini"></span>
       </div>
-      <div id="authStatus" class="mini"></div>
-      <small class="mini">Scopes used: <code>streaming user-read-playback-state user-modify-playback-state</code></small>
+      <small class="mini">Scopes: streaming, user-read-playback-state, user-modify-playback-state, playlist-read-private, playlist-read-collaborative</small>
     </div>
 
     <div class="section">
-      <h2>Add by URI</h2>
       <div class="row">
-        <input id="rename" type="text" placeholder="Type a custom name (optional)" />
+        <input id="uri" type="text" placeholder="Paste Spotify URI or link (track/album/playlist/show/episode)" />
+        <button class="btn" id="addUriBtn">Add</button>
       </div>
-      <div class="row">
-        <input id="uri" type="text" placeholder="Paste Spotify URI or URL (track/album/playlist)" />
-        <button class="btn primary" id="addUriBtn">Add</button>
-      </div>
-      <div class="mini">Examples: <code>spotify:track:…</code>, <code>spotify:album:…</code>, <code>spotify:playlist:…</code> or open.spotify.com links.</div>
+      <small class="mini">Examples: <code>spotify:track:…</code> • <code>spotify:album:…</code> • <code>https://open.spotify.com/playlist/…</code></small>
+      <div id="addStatus" class="mini" style="margin-top:6px"></div>
+    </div>
 
+    <div class="section">
+      <div class="row">
+        <span class="mini">Search (optional)</span>
+        <input id="searchQ" type="text" placeholder="Artist, album, playlist, show, episode…" />
+        <select id="searchType">
+          <option value="track">Tracks</option>
+          <option value="album">Albums</option>
+          <option value="playlist">Playlists</option>
+          <option value="artist">Artists</option>
+          <option value="show">Shows</option>
+          <option value="episode">Episodes</option>
+        </select>
+        <button class="btn" id="searchBtn">Search</button>
+      </div>
+      <div id="searchStatus" class="mini" style="margin-top:6px"></div>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <span class="mini">Duration gate (min→max)</span>
+        <input id="gateMin" type="text" placeholder="e.g., 0:24 or 24s" style="width:120px">
+        <input id="gateMax" type="text" placeholder="e.g., 15m" style="width:120px">
+        <button class="btn" id="applyGate">Apply to next add</button>
+        <button class="btn ghost" id="clearGate">Clear</button>
+      </div>
+      <small class="mini">Accepts <code>mm:ss</code>, <code>h:mm:ss</code>, <code>30s</code>, <code>15m</code>, <code>1h</code>, or plain minutes (e.g. <code>10</code>).</small>
+    </div>
+
+    <div class="section">
+      <button class="btn danger" id="clearBtn">Clear playlist</button>
+      <button class="btn" id="updateBtn">🔄 Show Update Button</button>
+      <div id="updateInfo" class="mini" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Player + tools + playlist -->
+  <div class="panel player">
+    <h2>Player</h2>
+
+    <div class="section">
+      <div class="row">
+        <button class="btn" id="prevBtn">⏮</button>
+        <button class="btn" id="playPauseBtn">▶️</button>
+        <button class="btn" id="nextBtn">⏭</button>
+        <button class="btn" id="randomTimeBtn" title="Jump to a random time (± random)">🎲 Random Time</button>
+        <label class="mini">Random Start Range
+          <input id="randMin" type="text" placeholder="24s" style="width:80px">
+          <input id="randMax" type="text" placeholder="15m" style="width:80px">
+          <label class="mini">Enable <input id="randToggle" type="checkbox" checked></label>
+        </label>
+        <button class="btn" id="shuffleBtn" title="Shuffle playback">🔀</button>
+        <span id="nowLabel" class="mini" style="margin-left:auto"></span>
+      </div>
       <div class="row" style="margin-top:8px">
-        <span class="mini">Clip duration (min→max)</span>
-        <input id="clipMin" type="text" value="0:00" style="width:100px">
-        <input id="clipMax" type="text" value="15:00" style="width:100px">
+        <span class="mini" id="curTime">0:00</span>
+        <input id="seek" type="range" min="0" max="1000" value="0" />
+        <span class="mini" id="durTime">0:00</span>
+        <span class="mini">Vol</span><input id="vol" type="range" min="0" max="1" step="0.01" value="1" style="width:140px"/>
       </div>
+      <div class="mini" id="playerStatus" style="margin-top:6px"></div>
+    </div>
 
-      <div class="row">
-        <span class="mini">Random start (min→max)</span>
-        <input id="randMin" type="text" value="0:24" style="width:100px">
+    <div class="tools">
+      <button class="btn" id="shuffleOrderBtn">🔀 Shuffle Order</button>
+      <span class="mini">Playlist Dur Filter (min→max)</span>
+      <input id="listMin" type="text" placeholder="0:00" style="width:90px">
+      <input id="listMax" type="text" placeholder="15:00" style="width:90px">
+      <button class="btn" id="listFilter">Apply</button>
+      <button class="btn ghost" id="listClear">Clear</button>
+    </div>
+
+    <div class="list" id="playlist">
+      <div class="mini" style="padding:10px 12px;">Playlist empty. Paste a Spotify URI or link above.</div>
+    </div>
+  </div>
+</main>
+
+<!-- Notes drawer -->
+<div class="drawer" id="notesDrawer">
+  <h3>✍️ Update Notes</h3>
+  <div class="mini" id="notesInfo" style="margin-bottom:6px;"></div>
+  <textarea id="notesArea" placeholder="Type what changed or what you added…"></textarea>
+  <div class="row" style="margin-top:8px">
+    <button class="btn primary" id="saveNotes">Save note</button>
+    <button class="btn" id="clearNotes">Clear</button>
+  </div>
+  <div class="log" id="notesLog"></div>
+</div>
+
+<!-- Spotify SDK (loads when needed) -->
+<script>
+/* =========================
+   Small helper utilities
+========================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt = s => { if(!isFinite(s)||s<0)s=0; const m=Math.floor(s/60), ss=String(Math.floor(s%60)).padStart(2,'0'); return m+':'+ss; };
+// Flexible duration parser: "mm:ss", "h:mm:ss", "30s", "15m", "1h", "10" (minutes)
+function parseDur(str){
+  if(!str) return null;
+  const t=str.trim().toLowerCase();
+  if(/^\d+:\d{1,2}:\d{2}$/.test(t)){ const [h,m,s]=t.split(':').map(Number); return h*3600+m*60+s; }
+  if(/^\d{1,2}:\d{2}$/.test(t)){ const [m,s]=t.split(':').map(Number); return m*60+s; }
+  if(/^\d+h$/.test(t)) return parseInt(t)*3600;
+  if(/^\d+m$/.test(t)) return parseInt(t)*60;
+  if(/^\d+s$/.test(t)) return parseInt(t);
+  if(/^\d+$/.test(t))  return parseInt(t)*60;
+  return null;
+}
+
+/* =========================
+   App state
+========================= */
+let token=null, me=null, deviceId=null, premium=false, sdkReady=false;
+let tracks=[]; // {id,title,artist,duration,uri,preview,source:'spotify'}
+let idx=-1, shufflePlayback=false;
+let gate=null; // {minSec?,maxSec?} applied when adding new URIs
+let listGate=null; // playlist filter min/max
+let usingSDK=false; // true if Web Playback SDK device is active
+
+/* =========================
+   PKCE Auth (browser-only)
+========================= */
+async function sha256(str){ const enc=new TextEncoder().encode(str); const hash=await crypto.subtle.digest('SHA-256', enc); return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function randStr(len=64){ const a=new Uint8Array(len); crypto.getRandomValues(a); return Array.from(a).map(v=>("0"+(v&0xff).toString(16)).slice(-2)).join(''); }
+function getParams(){ return Object.fromEntries(new URLSearchParams(location.search)); }
+function save(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+function load(key){ try{ return JSON.parse(localStorage.getItem(key)); }catch{return null;} }
+function clearAuth(){ token=null; me=null; premium=false
         <input id="randMax" type="text" value="15:00" style="width:100px">
         <label class="mini">Enable <input id="randToggle" type="checkbox" checked></label>
       </div>
